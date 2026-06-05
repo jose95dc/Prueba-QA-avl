@@ -1,4 +1,6 @@
 import { findVisible } from '../support/findVisible.js';
+import { dismissAndroidCompatibilityDialog } from '../support/dismissAndroidCompatibilityDialog.js';
+
 
 class MenuScreen {
   async openMenu() {
@@ -25,6 +27,19 @@ class MenuScreen {
 
     await browser.releaseActions();
     await browser.pause(800);
+  }
+
+   async openCatalog() {
+    await dismissAndroidCompatibilityDialog();
+
+    const catalogButton = await findVisible([
+      'android=new UiSelector().text("Catalog")',
+      'android=new UiSelector().textContains("Catalog")',
+      '~Catalog',
+    ], 8000);
+
+    await catalogButton.click();
+    await browser.pause(1500);
   }
 
   async openLogin() {

@@ -1,82 +1,191 @@
 import { findVisible } from '../support/findVisible.js';
+import { dismissAndroidCompatibilityDialog } from '../support/dismissAndroidCompatibilityDialog.js';
 
 class ProductsScreen {
   async expectCatalogVisible() {
-    await browser.pause(2000);
+    await dismissAndroidCompatibilityDialog();
+    await browser.pause(1000);
 
     try {
       const catalog = await findVisible([
-        // Posibles resource-id de la pantalla de productos
-        'android=new UiSelector().resourceIdMatches(".*product.*")',
-        'android=new UiSelector().resourceIdMatches(".*title.*")',
-        'android=new UiSelector().resourceIdMatches(".*catalog.*")',
-
-        // Textos visibles en pantalla
         'android=new UiSelector().textContains("Products")',
+        'android=new UiSelector().resourceIdMatches(".*product.*")',
         'android=new UiSelector().textContains("Sauce Labs Backpack")',
-        'android=new UiSelector().textContains("Sauce Labs")',
         'android=new UiSelector().textContains("Backpack")',
-        'android=new UiSelector().textContains("29.99")',
-      ], 12000);
+      ], 10000);
 
       await expect(catalog).toBeDisplayed();
       return;
     } catch (error) {
       const source = await browser.getPageSource();
 
-      const isProductsScreen =
+      if (
         source.includes('Products') ||
-        source.includes('Sauce Labs') ||
+        source.includes('Sauce Labs Backpack') ||
         source.includes('Backpack') ||
-        source.includes('29.99') ||
-        source.includes('product') ||
-        source.includes('Product');
-
-      if (isProductsScreen) {
-        console.log('Pantalla Products detectada por pageSource.');
+        source.includes('product')
+      ) {
+        console.log('Catálogo detectado por pageSource.');
         return;
       }
 
-      await browser.saveScreenshot(`./reports/products-not-found-${Date.now()}.png`);
-
-      console.log('===== PAGE SOURCE AL NO ENCONTRAR PRODUCTS =====');
+      await browser.saveScreenshot(`./reports/catalog-not-found-${Date.now()}.png`);
       console.log(source);
-      console.log('===== FIN PAGE SOURCE PRODUCTS =====');
-
       throw error;
     }
   }
 
   async openFirstProduct() {
-    const firstProduct = await findVisible([
-      'android=new UiSelector().textContains("Sauce Labs Backpack")',
-      'android=new UiSelector().textContains("Backpack")',
-      'android=new UiSelector().resourceIdMatches(".*title.*")',
-      'android=new UiSelector().resourceIdMatches(".*product.*")',
-    ], 12000);
+    await dismissAndroidCompatibilityDialog();
+    await browser.pause(1000);
 
-    await firstProduct.click();
+    const size = await browser.getWindowSize();
+
+    // Tap directo sobre la imagen del primer producto: Sauce Labs Backpack
+    const x = Math.round(size.width * 0.28);
+    const y = Math.round(size.height * 0.31);
+
+    console.log(`Haciendo tap sobre la imagen del primer producto en x=${x}, y=${y}`);
+
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x,
+            y,
+          },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 250 },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ]);
+
+    await browser.releaseActions();
+    await browser.pause(2500);
+
+    await dismissAndroidCompatibilityDialog();
+
+    // Validamos que sí entró al detalle del producto
+    const source = await browser.getPageSource();
+
+    if (
+      source.includes('Add to cart') ||
+      source.includes('Add To Cart') ||
+      source.includes('Add') ||
+      source.includes('Sauce Labs Backpack')
+    ) {
+      console.log('Detalle del producto abierto correctamente.');
+      return;
+    }
+
+    await browser.saveScreenshot(`./reports/product-detail-not-opened-${Date.now()}.png`);
+    console.log('===== PAGE SOURCE DESPUÉS DE TAP EN IMAGEN =====');
+    console.log(source);
+    console.log('===== FIN PAGE SOURCE =====');
+
+    throw new Error('No se logró abrir el detalle del producto al hacer tap sobre la imagen.');
   }
 
   async addCurrentProductToCart() {
-    const addButton = await findVisible([
-      'android=new UiSelector().textContains("Add To Cart")',
-      'android=new UiSelector().textContains("Add to cart")',
-      'android=new UiSelector().textContains("Add")',
-      'android=new UiSelector().resourceIdMatches(".*cart.*")',
-    ], 12000);
+    await dismissAndroidCompatibilityDialog();
+    await browser.pause(1500);
 
-    await addButton.click();
+    try {
+      const addButton = await findVisible([
+        'android=new UiSelector().textContains("Add to cart")',
+        'android=new UiSelector().textContains("Add To Cart")',
+        'android=new UiSelector().textContains("Add")',
+        'android=new UiSelector().resourceIdMatches(".*cart.*")',
+      ], 8000);
+
+      await addButton.click();
+      console.log('Click ejecutado sobre Add to cart.');
+      await browser.pause(2000);
+      return;
+    } catch (error) {
+      console.log('No se encontró Add to cart por selector. Intentando tap por coordenadas.');
+    }
+
+    const size = await browser.getWindowSize();
+
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x: Math.round(size.width * 0.50),
+            y: Math.round(size.height * 0.84),
+          },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 250 },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ]);
+
+    await browser.releaseActions();
+    await browser.pause(2000);
+  }
+
+  async openCart() {
+    await dismissAndroidCompatibilityDialog();
+    await browser.pause(1000);
+
+    const cartButton = await findVisible([
+      'android=new UiSelector().resourceId("com.saucelabs.mydemoapp.android:id/cartRL")',
+      'android=new UiSelector().resourceId("com.saucelabs.mydemoapp.android:id/cartIV")',
+      'android=new UiSelector().descriptionContains("cart")',
+    ], 8000);
+
+    await cartButton.click();
+    await browser.pause(2000);
+  }
+
+  async expectProductInCart() {
+    await dismissAndroidCompatibilityDialog();
+    await browser.pause(1000);
+
+    try {
+      const cartTitle = await findVisible([
+        'android=new UiSelector().textContains("My Cart")',
+        'android=new UiSelector().textContains("Sauce Labs Backpack")',
+        'android=new UiSelector().textContains("Remove Item")',
+        'android=new UiSelector().textContains("Proceed To Checkout")',
+      ], 10000);
+
+      await expect(cartTitle).toBeDisplayed();
+      return;
+    } catch (error) {
+      const source = await browser.getPageSource();
+
+      const isCartVisible =
+        source.includes('My Cart') &&
+        source.includes('Sauce Labs Backpack');
+
+      if (isCartVisible) {
+        console.log('Producto detectado correctamente en My Cart por pageSource.');
+        return;
+      }
+
+      await browser.saveScreenshot(`./reports/cart-validation-error-${Date.now()}.png`);
+      console.log(source);
+      throw error;
+    }
   }
 
   async expectCartUpdated() {
-    const cart = await findVisible([
-      'android=new UiSelector().descriptionContains("cart")',
-      'android=new UiSelector().resourceIdMatches(".*cart.*")',
-      'android=new UiSelector().textContains("1")',
-    ], 12000);
-
-    await expect(cart).toBeDisplayed();
+    await this.openCart();
+    await this.expectProductInCart();
   }
 }
 
