@@ -1,7 +1,7 @@
 import path from 'node:path';
 import 'dotenv/config';
 
-const appPath = path.resolve(process.env.APP_PATH || './apps/mda-2.0.1-23.apk');
+const appPath = path.resolve(process.env.APP_PATH || './apps/mda-2.2.0-25.apk');
 
 const androidCaps: Record<string, unknown> = {
   platformName: 'Android',
@@ -25,6 +25,7 @@ export const config = {
   maxInstances: 1,
   logLevel: 'info',
   bail: 0,
+  specFileRetries: 0,
   waitforTimeout: 15_000,
   connectionRetryTimeout: 120_000,
   connectionRetryCount: 1,
@@ -45,8 +46,9 @@ export const config = {
   framework: 'mocha',
   reporters: ['spec'],
   mochaOpts: {
-    ui: 'bdd',
-    timeout: 120_000
+     ui: 'bdd',
+  timeout: 120_000,
+  retries: 0
   },
   capabilities: [androidCaps]
 };

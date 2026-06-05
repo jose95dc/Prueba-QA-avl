@@ -1,7 +1,7 @@
 {
   "name": "mi-proyecto-qa-automation",
   "version": "1.0.0",
-  "description": "Prueba t\u00e9cnica QA Automation: Appium + WebdriverIO, Playwright API Testing y KafkaJS opcional.",
+  "description": "Prueba técnica QA Automation: Appium + WebdriverIO, Playwright API Testing y KafkaJS opcional.",
   "type": "module",
   "scripts": {
     "test:api": "playwright test api-tests",
@@ -25,6 +25,7 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "appium": "^3.0.0",
+    "appium-uiautomator2-driver": "^7.6.0",
     "dotenv": "^16.4.7",
     "kafkajs": "^2.2.4",
     "ts-node": "^10.9.2",
